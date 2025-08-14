@@ -1,0 +1,9 @@
+---
+- name: Déployer Keystone sur le contrôleur OpenStack
+  hosts: controller
+  become: yes
+  collections:
+    - community.rabbitmq
+    - openstack.cloud
+  roles:
+    - keystone

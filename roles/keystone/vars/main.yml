@@ -1,0 +1,26 @@
+---
+# Mots de passe et utilisateurs
+mariadb_root_password: "rootpass"
+mysql_root_password: "rootpass"
+keystone_db_password: "keystonepass"
+rabbitmq_password: "rabbitpass"
+keystone_admin_password: "adminpass"
+keystone_user_demo_password: "userpass"
+
+# Informations Keystone
+keystone_region: "RegionOne"
+controller_hostname: "10.0.0.11"
+
+# Domaine OpenStack
+keystone_domain_name: "default"
+keystone_domain_desc: "Default Domain"
+
+# Auth pour OpenStack (sans clouds.yaml)
+os_auth:
+  auth_url: "http://10.0.0.11:5000/v3"
+  username: "admin"
+  password: "{{ keystone_admin_password }}"
+  project_name: "admin"
+  user_domain_name: "Default"
+  project_domain_name: "Default"
+  

@@ -1,0 +1,24 @@
+all:
+  children:
+    controller:
+      hosts:
+        controller-node:
+          ansible_host: 10.0.0.11
+          ansible_user: openstack
+          ansible_ssh_private_key_file: /var/lib/jenkins/.ssh/openstack_key.pem
+          ansible_ssh_common_args: '-o ProxyJump=root@172.26.32.11'
+    compute:
+      hosts:
+        compute-node:
+          ansible_host: 10.0.0.21
+          ansible_user: openstack
+          ansible_ssh_private_key_file: /var/lib/jenkins/.ssh/openstack_key.pem
+          ansible_ssh_common_args: '-o ProxyJump=root@172.26.32.11'
+    storage:
+      hosts:
+        storage-node:
+          ansible_host: 10.0.0.31
+          ansible_user: openstack
+          ansible_ssh_private_key_file: /var/lib/jenkins/.ssh/openstack_key.pem
+          ansible_ssh_common_args: '-o ProxyJump=root@172.26.32.11'
+

@@ -1,0 +1,5 @@
+---
+# defaults file for keystone
+
+keystone_port: 5000
+keystone_workers: 4

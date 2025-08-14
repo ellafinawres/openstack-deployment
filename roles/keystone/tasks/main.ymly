@@ -1,0 +1,93 @@
+---
+# Installation des paquets nécessaires
+- name: Installer les paquets Keystone
+  apt:
+    name:
+      - keystone
+      - apache2
+      - libapache2-mod-wsgi-py3
+    state: present
+    update_cache: yes
+  become: yes
+
+# Création de la base de données Keystone
+- name: Créer la base de données keystone
+  mysql_db:
+    name: keystone
+    state: present
+  become: yes
+
+- name: Créer l'utilisateur MySQL Keystone
+  mysql_user:
+    name: keystone
+    password: "{{ keystone_db_password }}"
+    priv: "keystone.*:ALL"
+    host: "%"
+    state: present
+  become: yes
+
+# Configuration RabbitMQ : utilisateur + permissions
+- name: Créer utilisateur RabbitMQ openstack avec permissions
+  community.rabbitmq.rabbitmq_user:
+    user: openstack
+    password: "{{ rabbitmq_password }}"
+    state: present
+    configure_priv: .*
+    read_priv: .*
+    write_priv: .*
+  become: yes
+
+# Configuration de Keystone
+- name: Copier le fichier de configuration keystone.conf
+  template:
+    src: keystone.conf.j2
+    dest: /etc/keystone/keystone.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+
+# Synchronisation de la base Keystone
+- name: Synchroniser la base de données Keystone
+  command: keystone-manage db_sync
+  become: yes
+  become_user: keystone
+
+# Initialisation de Fernet Keys
+- name: Initialiser les Fernet keys
+  command: keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+  become: yes
+
+- name: Initialiser les credentials keys
+  command: keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+  become: yes
+
+# Bootstrap de Keystone
+- name: Bootstrap Keystone
+  command: >
+    keystone-manage bootstrap
+    --bootstrap-password "{{ keystone_admin_password }}"
+    --bootstrap-admin-url http://{{ controller_hostname }}:5000/v3/
+    --bootstrap-internal-url http://{{ controller_hostname }}:5000/v3/
+    --bootstrap-public-url http://{{ controller_hostname }}:5000/v3/
+    --bootstrap-region-id {{ keystone_region }}
+  become: yes
+
+# Configuration Apache
+- name: Activer Apache WSGI Keystone
+  file:
+    src: /usr/share/keystone/wsgi-keystone.conf
+    dest: /etc/apache2/sites-available/wsgi-keystone.conf
+    state: link
+  become: yes
+
+- name: Activer site Apache
+  command: a2ensite wsgi-keystone
+  become: yes
+
+- name: Redémarrer Apache
+  service:
+    name: apache2
+    state: restarted
+    enabled: yes
+  become: yes

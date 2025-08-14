@@ -1,0 +1,166 @@
+---
+# Installation des paquets nécessaires
+- name: Installer les paquets Keystone et dépendances
+  apt:
+    name:
+      - keystone
+      - apache2
+      - libapache2-mod-wsgi-py3
+      - rabbitmq-server
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Installer le client OpenStack
+  apt:
+    name: python3-openstackclient
+    state: present
+    update_cache: yes
+  become: yes
+
+# Création de la base de données Keystone
+- name: Créer la base de données keystone
+  mysql_db:
+    name: keystone
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  become: yes
+
+# Création utilisateurs MySQL Keystone
+- name: Créer l'utilisateur MySQL Keystone @'%'
+  mysql_user:
+    name: keystone
+    password: "{{ keystone_db_password }}"
+    priv: "keystone.*:ALL"
+    host: "%"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  become: yes
+
+- name: Créer l'utilisateur MySQL Keystone @'localhost'
+  mysql_user:
+    name: keystone
+    password: "{{ keystone_db_password }}"
+    priv: "keystone.*:ALL"
+    host: "localhost"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  become: yes
+
+# Configuration RabbitMQ
+- name: Créer utilisateur RabbitMQ openstack avec permissions
+  community.rabbitmq.rabbitmq_user:
+    user: openstack
+    password: "{{ rabbitmq_password }}"
+    state: present
+    configure_priv: .*
+    read_priv: .*
+    write_priv: .*
+  become: yes
+
+# Configuration Keystone
+- name: Copier le fichier de configuration keystone.conf
+  template:
+    src: keystone.conf.j2
+    dest: /etc/keystone/keystone.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+
+# Synchronisation de la base Keystone
+- name: Synchroniser la base de données Keystone
+  command: sudo -u keystone keystone-manage db_sync
+  become: yes
+
+# Initialisation des clés
+- name: Initialiser les Fernet keys
+  command: sudo -u keystone keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+  become: yes
+
+- name: Initialiser les credentials keys
+  command: sudo -u keystone keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
+  become: yes
+
+# Bootstrap de Keystone
+- name: Bootstrap Keystone
+  command: >
+    sudo -u keystone keystone-manage bootstrap
+    --bootstrap-password "{{ keystone_admin_password }}"
+    --bootstrap-admin-url http://{{ controller_hostname }}:5000/v3/
+    --bootstrap-internal-url http://{{ controller_hostname }}:5000/v3/
+    --bootstrap-public-url http://{{ controller_hostname }}:5000/v3/
+    --bootstrap-region-id "{{ keystone_region }}"
+  become: yes
+
+# Déploiement configuration Apache
+- name: Copier le fichier wsgi-keystone.conf
+  copy:
+    src: wsgi-keystone.conf
+    dest: /etc/apache2/sites-available/wsgi-keystone.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+
+- name: Activer le site Apache pour Keystone
+  command: a2ensite wsgi-keystone.conf
+  become: yes
+
+- name: Activer le module wsgi
+  command: a2enmod wsgi
+  become: yes
+
+- name: Redémarrer Apache
+  service:
+    name: apache2
+    state: restarted
+    enabled: yes
+  become: yes
+
+# ✅ Automatisation des domaines, projets, utilisateurs et rôles
+- name: Créer le domaine OpenStack
+  openstack.cloud.identity_domain:
+    auth: "{{ os_auth }}"
+    name: "{{ keystone_domain_name }}"
+    description: "{{ keystone_domain_desc }}"
+    state: present
+
+- name: Créer le projet service
+  openstack.cloud.project:
+    auth: "{{ os_auth }}"
+    name: "service"
+    domain: "{{ keystone_domain_name }}"
+    description: "Service Project"
+    state: present
+
+- name: Créer le projet demo
+  openstack.cloud.project:
+    auth: "{{ os_auth }}"
+    name: "myproject"
+    domain: "{{ keystone_domain_name }}"
+    description: "Demo Project"
+    state: present
+
+- name: Créer l'utilisateur demo
+  openstack.cloud.identity_user:
+    auth: "{{ os_auth }}"
+    name: "myuser"
+    password: "{{ keystone_user_demo_password }}"
+    default_project: "myproject"
+    domain: "{{ keystone_domain_name }}"
+    state: present
+
+- name: Créer le rôle demo
+  openstack.cloud.identity_role:
+    auth: "{{ os_auth }}"
+    name: "myrole"
+    state: present
+
+- name: Ajouter le rôle à l'utilisateur dans le projet
+  openstack.cloud.role_assignment:
+    auth: "{{ os_auth }}"
+    user: "myuser"
+    project: "myproject"
+    role: "myrole"
+    state: present

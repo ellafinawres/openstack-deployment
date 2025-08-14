@@ -1,0 +1,10 @@
+[DEFAULT]
+admin_token = {{ keystone_admin_password }}
+bind_host = 0.0.0.0
+public_port = {{ keystone_port | default(5000) }}
+
+[database]
+connection = mysql+pymysql://keystone:{{ keystone_db_password }}@localhost/keystone
+
+[token]
+provider = fernet
