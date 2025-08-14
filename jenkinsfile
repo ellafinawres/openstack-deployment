@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    environment {
+        ANSIBLE_HOST_KEY_CHECKING = 'False'
+        OS_USERNAME = 'admin'
+        OS_PASSWORD = 'adminpass'
+        OS_PROJECT_NAME = 'admin'
+        OS_USER_DOMAIN_NAME = 'Default'
+        OS_PROJECT_DOMAIN_NAME = 'Default'
+        OS_AUTH_URL = 'http://10.0.0.11:5000/v3'
+        OS_IDENTITY_API_VERSION = '3'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/ellafinawres/openstack-deployment.git'
+            }
+        }
+
+        stage('Deploy Keystone with Ansible') {
+            steps {
+                sh '''
+                ansible-playbook -i inventory.yml site.yml
+                '''
+            }
+        }
+
+        stage('Verify Keystone') {
+            steps {
+                sh '''
+                openstack project list
+                openstack user list
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Keystone déployé et vérifié"
+        }
+        failure {
+            echo "❌ Échec du déploiement ou de la vérification"
+        }
+    }
+}
