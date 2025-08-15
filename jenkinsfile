@@ -10,6 +10,7 @@ pipeline {
         OS_PROJECT_DOMAIN_NAME = 'Default'
         OS_AUTH_URL = 'http://10.0.0.11:5000/v3'
         OS_IDENTITY_API_VERSION = '3'
+        INVENTORY = 'inventory.yml' // chemin de ton inventaire Ansible
     }
 
     stages {
@@ -19,27 +20,38 @@ pipeline {
             }
         }
 
+        stage('Test de connexion Ansible') {
+            steps {
+                echo "=== Test de connexion Ansible ==="
+                sh """
+                ansible -i ${INVENTORY} all -m ping -e 'ansible_ssh_timeout=30'
+                """
+            }
+        }
+
         stage('Deploy Keystone with Ansible') {
             steps {
-                sh '''
-                ansible-playbook -i inventory.yml site.yml
-                '''
+                echo "=== Déploiement Keystone ==="
+                sh """
+                ansible-playbook -i ${INVENTORY} site.yml
+                """
             }
         }
 
         stage('Verify Keystone') {
             steps {
-                sh '''
+                echo "=== Vérification Keystone ==="
+                sh """
                 openstack project list
                 openstack user list
-                '''
+                """
             }
         }
     }
 
     post {
         success {
-            echo "✅ Keystone déployé et vérifié"
+            echo "✅ Déploiement OpenStack terminé et Keystone vérifié"
         }
         failure {
             echo "❌ Échec du déploiement ou de la vérification"
