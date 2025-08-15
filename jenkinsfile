@@ -3,6 +3,10 @@ pipeline {
 
     environment {
         ANSIBLE_HOST_KEY_CHECKING = 'False'
+        SSH_KEY = '/var/jenkins_home/.ssh/id_rsa'
+        SSH_USER = 'nawresellafi'
+        SSH_HOST = 'localhost'
+
         OS_USERNAME = 'admin'
         OS_PASSWORD = 'adminpass'
         OS_PROJECT_NAME = 'admin'
@@ -21,23 +25,33 @@ pipeline {
 
         stage('Test Ansible connectivity') {
             steps {
-                echo "=== Test de ping Ansible ==="
-                sh "ansible -i inventory.yml all -m ping -e 'ansible_ssh_timeout=30'"
+                dir("${WORKSPACE}") {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} \\
+                    'ansible -i inventory.yml all -m ping -e ansible_ssh_timeout=30'
+                    """
+                }
             }
         }
 
         stage('Deploy Keystone') {
             steps {
-                echo "=== Déploiement Keystone ==="
-                sh "ansible-playbook -i inventory.yml site.yml"
+                dir("${WORKSPACE}") {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} \\
+                    'ansible-playbook -i inventory.yml site.yml'
+                    """
+                }
             }
         }
 
         stage('Verify Keystone') {
             steps {
-                echo "=== Vérification Keystone ==="
-                sh "openstack project list"
-                sh "openstack user list"
+                dir("${WORKSPACE}") {
+                    echo "=== Vérification Keystone ==="
+                    sh "openstack project list"
+                    sh "openstack user list"
+                }
             }
         }
     }
