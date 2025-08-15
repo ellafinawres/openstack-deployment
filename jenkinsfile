@@ -10,26 +10,34 @@ pipeline {
         OS_PROJECT_DOMAIN_NAME = 'Default'
         OS_AUTH_URL = 'http://10.0.0.11:5000/v3'
         OS_IDENTITY_API_VERSION = '3'
-        INVENTORY = '/ansible/inventory.yml'
-        TMPDIR = '/var/jenkins_home/tmp' // <-- force Jenkins à utiliser ce tmp
     }
 
     stages {
-        stage('Pipeline OpenStack') {
+        stage('Checkout from Git') {
             steps {
-                dir('/ansible') {
-                    echo "=== Test de connexion Ansible ==="
-                    sh "ansible -i ${INVENTORY} all -m ping -e 'ansible_ssh_timeout=30'"
+                git branch: 'main', url: 'https://github.com/ellafinawres/openstack-deployment.git'
+            }
+        }
 
-                    echo "=== Déploiement Keystone ==="
-                    sh "ansible-playbook -i ${INVENTORY} site.yml"
+        stage('Test Ansible connectivity') {
+            steps {
+                echo "=== Test de ping Ansible ==="
+                sh "ansible -i inventory.yml all -m ping -e 'ansible_ssh_timeout=30'"
+            }
+        }
 
-                    echo "=== Vérification Keystone ==="
-                    sh """
-                    openstack project list
-                    openstack user list
-                    """
-                }
+        stage('Deploy Keystone') {
+            steps {
+                echo "=== Déploiement Keystone ==="
+                sh "ansible-playbook -i inventory.yml site.yml"
+            }
+        }
+
+        stage('Verify Keystone') {
+            steps {
+                echo "=== Vérification Keystone ==="
+                sh "openstack project list"
+                sh "openstack user list"
             }
         }
     }
