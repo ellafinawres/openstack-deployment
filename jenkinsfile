@@ -3,17 +3,9 @@ pipeline {
 
     environment {
         ANSIBLE_HOST_KEY_CHECKING = 'False'
-        SSH_KEY = '/var/jenkins_home/.ssh/id_rsa'
-        SSH_USER = 'nawresellafi'
-        SSH_HOST = 'localhost'
-
-        OS_USERNAME = 'admin'
-        OS_PASSWORD = 'adminpass'
-        OS_PROJECT_NAME = 'admin'
-        OS_USER_DOMAIN_NAME = 'Default'
-        OS_PROJECT_DOMAIN_NAME = 'Default'
-        OS_AUTH_URL = 'http://10.0.0.11:5000/v3'
-        OS_IDENTITY_API_VERSION = '3'
+        SSH_KEY = '/var/jenkins_home/.ssh/id_rsa'   // clé copiée dans Jenkins
+        SSH_USER = 'nawresellafi'                  // ton utilisateur hôte
+        SSH_HOST = '172.17.0.1'                     // IP de la machine hôte vue depuis le container
     }
 
     stages {
@@ -25,7 +17,7 @@ pipeline {
 
         stage('Test Ansible connectivity') {
             steps {
-                dir("${WORKSPACE}") {
+                dir('openstack-deployment') {
                     sh """
                     ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} \\
                     'ansible -i inventory.yml all -m ping -e ansible_ssh_timeout=30'
@@ -36,7 +28,7 @@ pipeline {
 
         stage('Deploy Keystone') {
             steps {
-                dir("${WORKSPACE}") {
+                dir('openstack-deployment') {
                     sh """
                     ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} \\
                     'ansible-playbook -i inventory.yml site.yml'
@@ -47,10 +39,12 @@ pipeline {
 
         stage('Verify Keystone') {
             steps {
-                dir("${WORKSPACE}") {
+                dir('openstack-deployment') {
                     echo "=== Vérification Keystone ==="
-                    sh "openstack project list"
-                    sh "openstack user list"
+                    sh """
+                    ssh -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} 'openstack project list'
+                    ssh -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} 'openstack user list'
+                    """
                 }
             }
         }
