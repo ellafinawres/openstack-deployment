@@ -2,42 +2,46 @@ pipeline {
     agent any
 
     environment {
-        ANSIBLE_HOST_KEY_CHECKING = 'False'
+        SSH_KEY = '/var/jenkins_home/.ssh/id_rsa'
+        HOST = '192.168.1.15'
+        ANSIBLE_INVENTORY = '/etc/ansible/inventory.yml'
+        ANSIBLE_PLAYBOOK = '/etc/ansible/site.yml'
     }
 
     stages {
-        stage('Checkout from Git') {
+        stage('Test SSH') {
             steps {
-                git branch: 'main', url: 'https://github.com/ellafinawres/openstack-deployment.git'
+                sh """
+                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} 'echo Connexion réussie'
+                """
             }
         }
 
-        stage('Test Ansible connectivity') {
+        stage('Test Ansible') {
             steps {
-                sh "ansible -i /etc/ansible/inventory.yml all -m ping -e ansible_ssh_timeout=30"
+                sh """
+                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} \
+                "ansible-playbook -i ${ANSIBLE_INVENTORY} ${ANSIBLE_PLAYBOOK} --check"
+                """
             }
         }
 
-        stage('Deploy Keystone') {
+        stage('Déploiement') {
             steps {
-                sh "ansible-playbook -i /etc/ansible/inventory.yml /etc/ansible/site.yml"
-            }
-        }
-
-        stage('Verify Keystone') {
-            steps {
-                sh "ssh -i /var/lib/jenkins/.ssh/openstack_key.pem openstack@10.0.0.11 'openstack project list'"
-                sh "ssh -i /var/lib/jenkins/.ssh/openstack_key.pem openstack@10.0.0.11 'openstack user list'"
+                sh """
+                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} \
+                "ansible-playbook -i ${ANSIBLE_INVENTORY} ${ANSIBLE_PLAYBOOK}"
+                """
             }
         }
     }
 
     post {
         success {
-            echo "✅ Déploiement OpenStack terminé et Keystone vérifié"
+            echo "Déploiement terminé avec succès"
         }
         failure {
-            echo "❌ Échec du déploiement ou de la vérification"
+            echo "Échec du déploiement"
         }
     }
 }
