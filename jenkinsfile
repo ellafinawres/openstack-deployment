@@ -2,10 +2,9 @@ pipeline {
     agent any
 
     environment {
-        ANSIBLE_HOST_KEY_CHECKING = 'False'
-        SSH_KEY = '/var/jenkins_home/.ssh/id_rsa'
-        SSH_USER = 'nawresellafi'
-        SSH_HOST = '172.17.0.1'
+        SSH_KEY = '/var/jenkins_home/.ssh/openstack_key.pem'
+        SSH_USER = 'root'
+        SSH_HOST = '172.26.32.11'
     }
 
     stages {
@@ -19,7 +18,7 @@ pipeline {
             steps {
                 sh """
                 ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} \\
-                'ansible -i /etc/ansible/inventory.yml all -m ping -e ansible_ssh_timeout=30'
+                'ansible -i /var/lib/jenkins/inventory.yml all -m ping -e ansible_ssh_timeout=30'
                 """
             }
         }
@@ -28,7 +27,7 @@ pipeline {
             steps {
                 sh """
                 ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} \\
-                'ansible-playbook -i /etc/ansible/inventory.yml /etc/ansible/site.yml'
+                'ansible-playbook -i /var/lib/jenkins/inventory.yml /var/lib/jenkins/site.yml'
                 """
             }
         }
