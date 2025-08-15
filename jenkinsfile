@@ -6,31 +6,15 @@ pipeline {
         HOST = '192.168.1.15'
         ANSIBLE_INVENTORY = '/etc/ansible/inventory.yml'
         ANSIBLE_PLAYBOOK = '/etc/ansible/site.yml'
+        VAULT_PASSWORD_FILE = '/etc/ansible/.vault_pass.txt'
     }
 
     stages {
-        stage('Test SSH') {
+        stage('Déploiement OpenStack') {
             steps {
                 sh """
-                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} 'echo Connexion réussie'
-                """
-            }
-        }
-
-        stage('Test Ansible') {
-            steps {
-                sh """
-                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} \
-                "ansible-playbook -i ${ANSIBLE_INVENTORY} ${ANSIBLE_PLAYBOOK} --check"
-                """
-            }
-        }
-
-        stage('Déploiement') {
-            steps {
-                sh """
-                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} \
-                "ansible-playbook -i ${ANSIBLE_INVENTORY} ${ANSIBLE_PLAYBOOK}"
+                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} \\
+                "ansible-playbook -i ${ANSIBLE_INVENTORY} ${ANSIBLE_PLAYBOOK} --vault-password-file ${VAULT_PASSWORD_FILE}"
                 """
             }
         }
