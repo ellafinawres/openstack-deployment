@@ -2,9 +2,7 @@ pipeline {
     agent any
 
     environment {
-        SSH_KEY = '/var/jenkins_home/.ssh/openstack_key.pem'
-        SSH_USER = 'root'
-        SSH_HOST = '172.26.32.11'
+        ANSIBLE_HOST_KEY_CHECKING = 'False'
     }
 
     stages {
@@ -16,26 +14,20 @@ pipeline {
 
         stage('Test Ansible connectivity') {
             steps {
-                sh """
-                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} \\
-                'ansible -i /var/lib/jenkins/inventory.yml all -m ping -e ansible_ssh_timeout=30'
-                """
+                sh "ansible -i /etc/ansible/inventory.yml all -m ping -e ansible_ssh_timeout=30"
             }
         }
 
         stage('Deploy Keystone') {
             steps {
-                sh """
-                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} \\
-                'ansible-playbook -i /var/lib/jenkins/inventory.yml /var/lib/jenkins/site.yml'
-                """
+                sh "ansible-playbook -i /etc/ansible/inventory.yml /etc/ansible/site.yml"
             }
         }
 
         stage('Verify Keystone') {
             steps {
-                sh "ssh -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} 'openstack project list'"
-                sh "ssh -i ${SSH_KEY} ${SSH_USER}@${SSH_HOST} 'openstack user list'"
+                sh "ssh -i /var/lib/jenkins/.ssh/openstack_key.pem openstack@10.0.0.11 'openstack project list'"
+                sh "ssh -i /var/lib/jenkins/.ssh/openstack_key.pem openstack@10.0.0.11 'openstack user list'"
             }
         }
     }
