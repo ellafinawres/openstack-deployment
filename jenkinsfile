@@ -10,7 +10,8 @@ pipeline {
         OS_PROJECT_DOMAIN_NAME = 'Default'
         OS_AUTH_URL = 'http://10.0.0.11:5000/v3'
         OS_IDENTITY_API_VERSION = '3'
-        INVENTORY = '/ansible/inventory.yml' // inventaire monté depuis la machine locale
+        INVENTORY = '/ansible/inventory.yml'
+        TMPDIR = '/var/jenkins_home/tmp' // <-- force Jenkins à utiliser ce tmp
     }
 
     stages {
@@ -42,4 +43,3 @@ pipeline {
         }
     }
 }
-
