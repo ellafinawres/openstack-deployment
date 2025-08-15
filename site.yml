@@ -2,6 +2,8 @@
 - name: Déployer Keystone sur le contrôleur OpenStack
   hosts: controller
   become: yes
+  vars_files:
+    - /etc/ansible/vault.yml
   collections:
     - community.rabbitmq
     - openstack.cloud
