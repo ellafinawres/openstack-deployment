@@ -10,41 +10,25 @@ pipeline {
         OS_PROJECT_DOMAIN_NAME = 'Default'
         OS_AUTH_URL = 'http://10.0.0.11:5000/v3'
         OS_IDENTITY_API_VERSION = '3'
-        INVENTORY = 'inventory.yml' // chemin de ton inventaire Ansible
+        INVENTORY = '/ansible/inventory.yml' // inventaire monté depuis la machine locale
     }
 
     stages {
-        stage('Checkout') {
+        stage('Pipeline OpenStack') {
             steps {
-                git branch: 'main', url: 'https://github.com/ellafinawres/openstack-deployment.git'
-            }
-        }
+                dir('/ansible') {
+                    echo "=== Test de connexion Ansible ==="
+                    sh "ansible -i ${INVENTORY} all -m ping -e 'ansible_ssh_timeout=30'"
 
-        stage('Test de connexion Ansible') {
-            steps {
-                echo "=== Test de connexion Ansible ==="
-                sh """
-                ansible -i ${INVENTORY} all -m ping -e 'ansible_ssh_timeout=30'
-                """
-            }
-        }
+                    echo "=== Déploiement Keystone ==="
+                    sh "ansible-playbook -i ${INVENTORY} site.yml"
 
-        stage('Deploy Keystone with Ansible') {
-            steps {
-                echo "=== Déploiement Keystone ==="
-                sh """
-                ansible-playbook -i ${INVENTORY} site.yml
-                """
-            }
-        }
-
-        stage('Verify Keystone') {
-            steps {
-                echo "=== Vérification Keystone ==="
-                sh """
-                openstack project list
-                openstack user list
-                """
+                    echo "=== Vérification Keystone ==="
+                    sh """
+                    openstack project list
+                    openstack user list
+                    """
+                }
             }
         }
     }
@@ -58,3 +42,4 @@ pipeline {
         }
     }
 }
+
