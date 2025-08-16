@@ -1,5 +1,6 @@
 ---
-- name: Installer paquets Glance et dépendances
+# Installer les paquets Glance et dépendances
+- name: Installer paquets Glance et python3-pymysql
   apt:
     name:
       - glance
@@ -8,15 +9,15 @@
     update_cache: yes
   become: yes
 
+# Créer la base Glance
 - name: Créer base Glance
   mysql_db:
     name: glance
     state: present
-    login_host: "{{ controller_hostname }}"
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
   become: yes
 
+# Créer les utilisateurs MySQL pour Glance
 - name: Créer utilisateur MySQL Glance @localhost
   mysql_user:
     name: glance
@@ -24,8 +25,7 @@
     priv: "glance.*:ALL"
     host: "localhost"
     state: present
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
   become: yes
 
 - name: Créer utilisateur MySQL Glance @'%'
@@ -35,10 +35,10 @@
     priv: "glance.*:ALL"
     host: "%"
     state: present
-    login_user: root
-    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
   become: yes
 
+# Créer l'utilisateur Glance dans Keystone
 - name: Créer l'utilisateur Glance dans Keystone
   openstack.cloud.identity_user:
     auth: "{{ os_auth }}"
@@ -56,6 +56,7 @@
     role: admin
     state: present
 
+# Créer le service Glance et endpoints
 - name: Créer le service Glance
   openstack.cloud.catalog_service:
     auth: "{{ os_auth }}"
@@ -77,6 +78,7 @@
     - { interface: internal }
     - { interface: admin }
 
+# Copier le fichier de configuration glance-api.conf
 - name: Copier fichier de configuration glance-api.conf
   template:
     src: glance-api.conf.j2
@@ -86,6 +88,7 @@
     mode: '0644'
   become: yes
 
+# Synchroniser la base Glance avec retries
 - name: Synchroniser la base Glance
   command: su -s /bin/sh -c "glance-manage db_sync" glance
   register: db_sync_result
@@ -94,6 +97,7 @@
   delay: 10
   become: yes
 
+# Redémarrer le service Glance
 - name: Redémarrer Glance
   service:
     name: glance-api
@@ -101,12 +105,14 @@
     enabled: yes
   become: yes
 
+# Télécharger l'image CirrOS
 - name: Télécharger image CirrOS
   get_url:
     url: http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img
     dest: /tmp/cirros-0.4.0-x86_64-disk.img
   become: yes
 
+# Importer l'image CirrOS dans Glance
 - name: Importer l'image CirrOS dans Glance
   command: >
     openstack image create cirros
