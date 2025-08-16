@@ -10,11 +10,20 @@ pipeline {
     }
 
     stages {
-        stage('Déploiement OpenStack') {
+        stage('Keystone Deployment') {
             steps {
                 sh """
                 ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} \\
-                "ansible-playbook -i ${ANSIBLE_INVENTORY} ${ANSIBLE_PLAYBOOK} --vault-password-file ${VAULT_PASSWORD_FILE}"
+                "ansible-playbook -i ${ANSIBLE_INVENTORY} ${ANSIBLE_PLAYBOOK} --tags keystone --vault-password-file ${VAULT_PASSWORD_FILE}"
+                """
+            }
+        }
+
+        stage('Glance Deployment') {
+            steps {
+                sh """
+                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} \\
+                "ansible-playbook -i ${ANSIBLE_INVENTORY} ${ANSIBLE_PLAYBOOK} --tags glance --vault-password-file ${VAULT_PASSWORD_FILE}"
                 """
             }
         }
@@ -22,7 +31,7 @@ pipeline {
 
     post {
         success {
-            echo "Déploiement terminé avec succès"
+            echo "Déploiement des services OpenStack terminé avec succès"
         }
         failure {
             echo "Échec du déploiement"

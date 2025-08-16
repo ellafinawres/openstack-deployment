@@ -1,5 +1,5 @@
 ---
-- name: Déployer Keystone sur le contrôleur OpenStack
+- name: Déployer Keystone et Glance sur le contrôleur OpenStack
   hosts: controller
   become: yes
   vars_files:
@@ -8,4 +8,5 @@
     - community.rabbitmq
     - openstack.cloud
   roles:
-    - keystone
+    - { role: keystone, tags: keystone }
+    - { role: glance, tags: glance }

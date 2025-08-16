@@ -1,0 +1,39 @@
+[DEFAULT]
+# Backend de stockage pour les images
+enabled_backends = fs:file
+
+[glance_store]
+default_backend = fs
+filesystem_store_datadir = {{ glance_filesystem_store }}
+
+[database]
+# Connexion à la base de données Glance
+connection = mysql+pymysql://glance:{{ glance_db_password }}@{{ controller_hostname }}/glance
+
+[keystone_authtoken]
+# Configuration de l'accès au service d'identité
+www_authenticate_uri = http://{{ controller_hostname }}:5000
+auth_url = http://{{ controller_hostname }}:5000
+memcached_servers = {{ controller_hostname }}:11211
+auth_type = password
+project_domain_name = Default
+user_domain_name = Default
+project_name = service
+username = glance
+password = {{ glance_user_password }}
+
+[paste_deploy]
+flavor = keystone
+
+[oslo_limit]
+# Limites par projet
+auth_url = http://{{ controller_hostname }}:5000
+auth_type = password
+user_domain_id = default
+username = glance
+system_scope = all
+password = {{ glance_user_password }}
+region_name = {{ glance_region }}
+
+[DEFAULT]
+use_keystone_limits = True

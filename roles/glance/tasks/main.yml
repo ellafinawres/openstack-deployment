@@ -1,0 +1,116 @@
+---
+# tasks file for glance
+
+- name: Installer paquet Glance
+  apt:
+    name: glance
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Créer base Glance
+  mysql_db:
+    name: glance
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  become: yes
+
+- name: Créer utilisateur MySQL Glance @localhost
+  mysql_user:
+    name: glance
+    password: "{{ glance_db_password }}"
+    priv: "glance.*:ALL"
+    host: "localhost"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  become: yes
+
+- name: Créer utilisateur MySQL Glance @'%'
+  mysql_user:
+    name: glance
+    password: "{{ glance_db_password }}"
+    priv: "glance.*:ALL"
+    host: "%"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  become: yes
+
+- name: Créer l'utilisateur Glance
+  openstack.cloud.identity_user:
+    auth: "{{ os_auth }}"
+    name: glance
+    password: "{{ glance_user_password }}"
+    default_project: service
+    domain: default
+    state: present
+
+- name: Ajouter rôle admin à Glance
+  openstack.cloud.role_assignment:
+    auth: "{{ os_auth }}"
+    user: glance
+    project: service
+    role: admin
+    state: present
+
+- name: Créer le service Glance
+  openstack.cloud.identity_service:
+    auth: "{{ os_auth }}"
+    name: glance
+    type: image
+    description: "OpenStack Image Service"
+    state: present
+
+- name: Créer endpoints Glance
+  openstack.cloud.endpoint:
+    auth: "{{ os_auth }}"
+    service: glance
+    region: "{{ glance_region }}"
+    interface: "{{ item.interface }}"
+    url: "http://{{ controller_hostname }}:9292"
+    state: present
+  loop:
+    - { interface: public }
+    - { interface: internal }
+    - { interface: admin }
+
+- name: Copier le fichier de configuration glance-api.conf
+  template:
+    src: glance-api.conf.j2
+    dest: /etc/glance/glance-api.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+
+- name: Synchroniser la base Glance
+  command: su -s /bin/sh -c "glance-manage db_sync" glance
+  become: yes
+
+- name: Redémarrer Glance
+  service:
+    name: glance-api
+    state: restarted
+    enabled: yes
+  become: yes
+
+- name: Télécharger image CirrOS
+  get_url:
+    url: http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img
+    dest: /tmp/cirros-0.4.0-x86_64-disk.img
+  become: yes
+
+- name: Importer l'image CirrOS dans Glance
+  command: >
+    openstack image create cirros
+    --file /tmp/cirros-0.4.0-x86_64-disk.img
+    --disk-format qcow2
+    --container-format bare
+    --public
+  environment:
+    OS_AUTH_URL: "{{ os_auth.auth_url }}"
+    OS_USERNAME: "{{ os_auth.username }}"
+    OS_PASSWORD: "{{ os_auth.password }}"
+    OS_PROJECT_NAME: "{{ os_auth.project_name }}"
+    OS_USER_DOMAIN_NAME: "{{ os_auth.user_domain_name }}"
+    OS_PROJECT_DOMAIN_NAME: "{{ os_auth.project_domain_name }}"
+  become: yes
