@@ -8,5 +8,8 @@
     - community.rabbitmq
     - openstack.cloud
   roles:
-    - { role: keystone, tags: keystone }
-    - { role: glance, tags: glance }
+    - role: keystone
+      tags: keystone
+    - role: glance
+      tags: glance
+

@@ -31,7 +31,7 @@ pipeline {
 
     post {
         success {
-            echo "Déploiement des services OpenStack terminé avec succès"
+            echo "Déploiement terminé avec succès"
         }
         failure {
             echo "Échec du déploiement"
