@@ -136,11 +136,11 @@
 
 - name: Importer l'image CirrOS dans Glance
   command: >
-    openstack image create "cirros"
+    openstack image create cirros
     --file /tmp/cirros-0.4.0-x86_64-disk.img
     --disk-format qcow2
     --container-format bare
-    --visibility=public
+    --public
   environment:
     OS_AUTH_URL: "{{ os_auth.auth_url }}"
     OS_USERNAME: "{{ os_auth.username }}"
