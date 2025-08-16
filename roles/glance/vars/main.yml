@@ -16,7 +16,7 @@ glance_filesystem_store: "/var/lib/glance/images"
 os_auth:
   auth_url: "http://10.0.0.11:5000/v3"
   username: "admin"
-  password: "adminpass"
+  password: "{{ keystone_admin_password }}"
   project_name: "admin"
   user_domain_name: "Default"
   project_domain_name: "Default"
