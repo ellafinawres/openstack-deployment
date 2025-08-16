@@ -105,14 +105,21 @@
     enabled: yes
   become: yes
 
-# Télécharger l'image CirrOS
 - name: Télécharger image CirrOS
   get_url:
     url: http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img
     dest: /tmp/cirros-0.4.0-x86_64-disk.img
+    mode: '0644'
   become: yes
 
-# Importer l'image CirrOS dans Glance
+- name: Changer propriétaire de l'image CirrOS
+  file:
+    path: /tmp/cirros-0.4.0-x86_64-disk.img
+    owner: glance
+    group: glance
+    mode: '0644'
+  become: yes
+
 - name: Importer l'image CirrOS dans Glance
   command: >
     openstack image create cirros
@@ -127,4 +134,8 @@
     OS_PROJECT_NAME: "{{ os_auth.project_name }}"
     OS_USER_DOMAIN_NAME: "{{ os_auth.user_domain_name }}"
     OS_PROJECT_DOMAIN_NAME: "{{ os_auth.project_domain_name }}"
+  register: cirros_import
+  until: cirros_import.rc == 0
+  retries: 5
+  delay: 15
   become: yes
