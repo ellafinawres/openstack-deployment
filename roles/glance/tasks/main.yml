@@ -63,7 +63,7 @@
     auth: "{{ os_auth }}"
     service: glance
     region: "{{ glance_region }}"
-    interface: "{{ item.interface }}"
+    endpoint_interface: "{{ item.interface }}"
     url: "http://{{ controller_hostname }}:9292"
     state: present
   loop:
