@@ -105,12 +105,21 @@
     enabled: yes
   become: yes
 
+- name: Redémarrer Glance
+  service:
+    name: glance-api
+    state: restarted
+    enabled: yes
+  become: yes
+
 - name: Télécharger image CirrOS
   get_url:
     url: http://download.cirros-cloud.net/0.4.0/cirros-0.4.0-x86_64-disk.img
     dest: /tmp/cirros-0.4.0-x86_64-disk.img
     mode: '0644'
   become: yes
+  delegate_to: 10.0.0.11
+  run_once: true
 
 - name: Changer propriétaire de l'image CirrOS
   file:
@@ -119,6 +128,8 @@
     group: glance
     mode: '0644'
   become: yes
+  delegate_to: 10.0.0.11
+  run_once: true
 
 - name: Importer l'image CirrOS dans Glance
   command: >
@@ -139,3 +150,6 @@
   retries: 5
   delay: 15
   become: yes
+  delegate_to: 10.0.0.11
+  run_once: true
+
