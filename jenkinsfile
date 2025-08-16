@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SSH_KEY = '/var/jenkins_home/.ssh/id_rsa'
-        HOST = '192.168.1.15'
+        HOST = '192.168.1.19'
         ANSIBLE_INVENTORY = '/etc/ansible/inventory.yml'
         ANSIBLE_PLAYBOOK = '/etc/ansible/site.yml'
         VAULT_PASSWORD_FILE = '/etc/ansible/.vault_pass.txt'
