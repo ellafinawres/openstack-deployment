@@ -1,6 +1,4 @@
 ---
-# vars file for glance
-
 # Mots de passe et utilisateurs
 glance_db_password: "glancepass"
 glance_user_password: "glancepass"
@@ -14,9 +12,12 @@ glance_filesystem_store: "/var/lib/glance/images"
 
 # Authentification OpenStack
 os_auth:
-  auth_url: "http://10.0.0.11:5000/v3"
+  auth_url: "http://{{ controller_hostname }}:5000/v3"
   username: "admin"
   password: "{{ keystone_admin_password }}"
   project_name: "admin"
   user_domain_name: "Default"
   project_domain_name: "Default"
+
+# Endpoint Glance (à remplir après création du service)
+glance_endpoint_id: ""

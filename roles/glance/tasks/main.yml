@@ -1,7 +1,9 @@
 ---
-- name: Installer paquets Glance
+- name: Installer paquets Glance et dépendances
   apt:
-    name: glance
+    name:
+      - glance
+      - python3-pymysql
     state: present
     update_cache: yes
   become: yes
@@ -10,7 +12,9 @@
   mysql_db:
     name: glance
     state: present
-    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_host: "{{ controller_hostname }}"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
   become: yes
 
 - name: Créer utilisateur MySQL Glance @localhost
@@ -20,7 +24,8 @@
     priv: "glance.*:ALL"
     host: "localhost"
     state: present
-    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
   become: yes
 
 - name: Créer utilisateur MySQL Glance @'%'
@@ -30,7 +35,8 @@
     priv: "glance.*:ALL"
     host: "%"
     state: present
-    login_unix_socket: /var/run/mysqld/mysqld.sock
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
   become: yes
 
 - name: Créer l'utilisateur Glance dans Keystone
@@ -82,6 +88,10 @@
 
 - name: Synchroniser la base Glance
   command: su -s /bin/sh -c "glance-manage db_sync" glance
+  register: db_sync_result
+  until: db_sync_result.rc == 0
+  retries: 5
+  delay: 10
   become: yes
 
 - name: Redémarrer Glance
