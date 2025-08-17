@@ -5,6 +5,7 @@
     name:
       - glance
       - python3-pymysql
+      - python3-boto3
     state: present
     update_cache: yes
   become: yes
