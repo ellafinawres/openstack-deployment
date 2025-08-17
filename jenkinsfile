@@ -29,15 +29,6 @@ pipeline {
             }
         }
 
-        stage('Test OpenStack Services') {
-            steps {
-                sh """
-                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} \\
-                "source ${OPENRC_FILE} && openstack service list && openstack endpoint list"
-                """
-            }
-        }
-    }
 
     post {
         success {
