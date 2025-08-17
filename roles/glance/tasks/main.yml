@@ -48,6 +48,16 @@
     domain: default
     state: present
 
+
+- name: Assurer que l'utilisateur glance a le rôle admin sur le projet service
+  openstack.cloud.role_assignment:
+    auth: "{{ os_auth }}"
+    user: glance
+    project: service
+    role: admin
+    state: present
+
+
 - name: Ajouter rôle admin à Glance
   openstack.cloud.role_assignment:
     auth: "{{ os_auth }}"
