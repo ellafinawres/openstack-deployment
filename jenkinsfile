@@ -7,6 +7,7 @@ pipeline {
         ANSIBLE_INVENTORY = '/etc/ansible/inventory.yml'
         ANSIBLE_PLAYBOOK = '/etc/ansible/site.yml'
         VAULT_PASSWORD_FILE = '/etc/ansible/.vault_pass.txt'
+        OPENRC_FILE = '~/admin-openrc.sh' 
     }
 
     stages {
@@ -27,14 +28,23 @@ pipeline {
                 """
             }
         }
+
+        stage('Test OpenStack Services') {
+            steps {
+                sh """
+                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} \\
+                "source ${OPENRC_FILE} && openstack service list && openstack endpoint list"
+                """
+            }
+        }
     }
 
     post {
         success {
-            echo "Déploiement terminé avec succès"
+            echo "Déploiement terminé avec succès et services vérifiés"
         }
         failure {
-            echo "Échec du déploiement"
+            echo "Échec du déploiement ou de la vérification des services"
         }
     }
 }
