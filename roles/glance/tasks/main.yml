@@ -142,7 +142,6 @@
     disk_format: qcow2
     container_format: bare
     visibility: public
-
   environment:
     OS_AUTH_URL: "{{ os_auth.auth_url }}"
     OS_USERNAME: "{{ os_auth.username }}"
@@ -150,9 +149,6 @@
     OS_PROJECT_NAME: "{{ os_auth.project_name }}"
     OS_USER_DOMAIN_NAME: "{{ os_auth.user_domain_name }}"
     OS_PROJECT_DOMAIN_NAME: "{{ os_auth.project_domain_name }}"
-  register: cirros_import
-  until: cirros_import.rc == 0
-  retries: 5
-  delay: 15
   become: yes
+
 
