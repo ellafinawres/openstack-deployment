@@ -26,11 +26,13 @@ filesystem_store_datadir = {{ glance_filesystem_store }}
 auth_url = http://{{ controller_hostname }}:5000
 auth_type = password
 user_domain_name = Default
-username = glance
+username = admin
 system_scope = all
-password = {{ glance_user_password }}
+password = adminpass
 region_name = {{ glance_region }}
+
 
 [DEFAULT]
 use_keystone_limits = True
 enabled_backends = fs:file
+                  

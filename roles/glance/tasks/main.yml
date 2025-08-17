@@ -1,6 +1,6 @@
 ---
 # Installer les paquets Glance et dépendances
-- name: Installer paquets Glance et python3-pymysql
+- name: Installer paquets Glance et dépendances
   apt:
     name:
       - glance
@@ -100,7 +100,7 @@
     mode: '0755'
   become: yes
 
-# Synchroniser la base Glance avec retries
+# Synchroniser la base Glance
 - name: Synchroniser la base Glance
   command: su -s /bin/sh -c "glance-manage db_sync" glance
   register: db_sync_result
@@ -134,20 +134,3 @@
     mode: '0644'
   become: yes
 
-# Importer l'image CirrOS dans Glance
-- name: Importer l'image CirrOS dans Glance
-  openstack.cloud.image:
-    auth: "{{ os_auth }}"
-    name: cirros
-    filename: /tmp/cirros-0.4.0-x86_64-disk.img
-    disk_format: qcow2
-    container_format: bare
-    visibility: public
-  environment:
-    OS_AUTH_URL: "{{ os_auth.auth_url }}"
-    OS_USERNAME: "{{ os_auth.username }}"
-    OS_PASSWORD: "{{ os_auth.password }}"
-    OS_PROJECT_NAME: "{{ os_auth.project_name }}"
-    OS_USER_DOMAIN_NAME: "{{ os_auth.user_domain_name }}"
-    OS_PROJECT_DOMAIN_NAME: "{{ os_auth.project_domain_name }}"
-  become: yes
