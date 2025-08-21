@@ -13,3 +13,13 @@
     - role: glance
       tags: glance
 
+- name: Déployer Nova Compute sur le compute OpenStack
+  hosts: compute
+  become: yes
+  vars_files:
+    - /etc/ansible/vault.yml
+  collections:
+    - openstack.cloud
+  roles:
+    - role: nova-compute
+      tags: nova-compute

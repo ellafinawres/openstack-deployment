@@ -1,0 +1,6 @@
+---
+# handlers file for nova-compute
+- name: Redémarrer nova-compute
+  systemd:
+    name: nova-compute
+    state: restarted

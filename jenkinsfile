@@ -28,6 +28,15 @@ pipeline {
                 """
             }
         }
+
+        stage('Nova Compute Deployment') {
+            steps {
+                sh """
+                ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} nawresellafi@${HOST} \
+                "ansible-playbook -i ${ANSIBLE_INVENTORY} ${ANSIBLE_PLAYBOOK} --tags nova-compute --vault-password-file ${VAULT_PASSWORD_FILE}"
+                """
+            }
+        }
     }
 
     post {

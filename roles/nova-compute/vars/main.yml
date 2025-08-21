@@ -1,0 +1,30 @@
+---
+
+# Mots de passe et utilisateurs Nova
+nova_user: "nova"
+nova_password: "novapass"
+
+# Informations sur le nœud Compute
+compute_hostname: "compute-node"   # Nom exact dans l'inventaire
+compute_ip: "{{ hostvars[compute_hostname].ansible_host }}"  # Récupère l'IP depuis l'inventaire
+
+# Authentification OpenStack
+os_auth:
+  auth_url: "http://{{ controller_hostname }}:5000/v3"
+  username: "admin"
+  password: "{{ keystone_admin_password }}"
+  project_name: "admin"
+  user_domain_name: "Default"
+  project_domain_name: "Default"
+
+# RabbitMQ pour Nova
+rabbit_user: "openstack"
+rabbitmq_password: "rabbitpass"
+
+# Placement
+placement_user: "placement"
+placement_pass: "placementpass"
+
+# Région OpenStack
+keystone_region: "RegionOne"
+controller_hostname: "10.0.0.11"

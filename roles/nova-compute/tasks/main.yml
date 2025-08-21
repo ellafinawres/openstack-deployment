@@ -1,0 +1,39 @@
+---
+- name: Installer les paquets Nova
+  apt:
+    name: nova-compute
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Copier le fichier de configuration nova.conf
+  template:
+    src: nova.conf.j2
+    dest: /etc/nova/nova.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Redémarrer nova-compute
+  become: yes
+
+- name: Vérifier si le compute supporte l'accélération matérielle
+  command: egrep -c '(vmx|svm)' /proc/cpuinfo
+  register: cpu_accel
+  changed_when: false
+  become: yes
+
+- name: Configurer virt_type dans nova.conf
+  ansible.builtin.ini_file:
+    path: /etc/nova/nova.conf
+    section: libvirt
+    option: virt_type
+    value: qemu
+    state: present
+
+
+- name: Assurer que le service nova-compute est démarré
+  service:
+    name: nova-compute
+    state: started
+    enabled: yes
+  become: yes
